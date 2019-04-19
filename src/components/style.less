@@ -1,0 +1,23 @@
+.container {
+    width: 100%;
+    height: 100%;
+    background-color: #EEE;
+
+    .chart-panel {
+        display: inline-block;
+        width: 300px;
+        height: 600px;
+        border-right: 5px solid black;
+        box-sizing: border-box;
+        vertical-align: top;
+        position: relative;
+    }
+
+    .canvas-panel {
+        display: inline-block;
+        width: CALC(~'100% - 300px' );
+        height: 600px;
+        vertical-align: top;
+        position: relative;
+    }
+}
