@@ -1,4 +1,27 @@
-.my-draggable {
-    width: 200px;
-    height: 200px;
+.canvas-panel {
+    .react-draggable {
+        z-index: 111;
+        box-sizing: content-box;
+        position: absolute;
+        border: 1px solid red;
+        overflow: visible;
+
+        .draggable-resize {
+            display: inline-block;
+        }
+
+        .draggable__content {
+            width: 100%;
+            height: 100%;
+        }
+
+        .draggable-mask {
+            position: absolute;
+            top: -11px;
+            left: -11px;
+            width: CALC(~'100% + 20PX');
+            height: CALC(~'100% + 20PX');
+            border: 1px solid blue;
+        }
+    }
 }

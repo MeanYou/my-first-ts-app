@@ -1,10 +1,15 @@
-import { observable } from 'mobx';
-import { CanvasModel } from 'app/models/CanvasModel';
+import { observable, action } from 'mobx';
 
 export class CanvasStore {
-    @observable public props: CanvasModel;
+    @observable public props: any;
+    @observable public draggables: Array<any>;
 
-    constructor(props: CanvasModel) {
+    @action
+    addDraggable = (draggable: any) => {
+        this.draggables.push(draggable);
+    }
+
+    constructor(props?: any) {
         this.props = props;
     }
 }

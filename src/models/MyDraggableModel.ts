@@ -1,7 +1,7 @@
 import { observable } from 'mobx';
 
 export class MyDraggableModel {
-    readonly id: number;
+    readonly id?: number;
     @observable public selected: boolean;
     @observable public type: string;
     @observable public dataSource: object;
