@@ -1,15 +1,29 @@
 /**
  * 定义Draggable组件的prop参数
  */
-export interface DraggableComponentProps {
-    onDragStart?: (arg: Position) => void,
-    onDragging?: (arg: Position) => void,
-    onDragEnd?: (arg: Position) => void,
+export interface DraggableProps {
+    id: number,
+    containerWidth: number,
+    containerHeight: number,
     width?: number,
     height?: number,
     top?: number,
     left?: number,
-    selected?: boolean
+    selected?: number,
+    onSelect?: (selected: number) => void,
+    onDragging?: (arg: Position) => void,
+    onDragEnd?: (arg: Position) => void,
+};
+
+/**
+ * 定义自身state属性
+ */
+export interface State {
+    width: number,
+    height: number,
+    top: number,
+    left: number,
+    dragging: boolean
 };
 
 /**
@@ -17,12 +31,16 @@ export interface DraggableComponentProps {
  * @param state 
  * @param action 
  */
-export const reducer = (state:DraggableComponentProps, action:Action):DraggableComponentProps => {
+export const reducer = (state:State, action:Action):State => {
     switch(action.type) {
+        case 'mouseDown':
+            return handleMouseDown(state, action);
         case 'drag':
-            return drag(state, action);
+            return handleDrag(state, action);
         case 'resize':
-            return resize(state, action);
+            return handleResize(state, action);
+        case 'mouseUp':
+            return handleMouseUp(state, action);
         default:
             return state;
     }
@@ -40,6 +58,8 @@ export interface Position {
  * 定义action类型
  */
 export type Action = {
+    type: 'mouseDown'
+} | {
     type: 'drag',
     top: number,
     left: number
@@ -47,12 +67,27 @@ export type Action = {
     type: 'resize',
     width: number,
     height: number
+} | {
+    type: 'mouseUp'
 };
+
+/**
+ * mouseDown reducer
+ */
+const handleMouseDown = (state:State, action:Action):State => {
+    if(action.type === 'mouseDown') {
+        return {
+            ...state,
+            dragging: true
+        };
+    }
+    return state;
+}
 
 /**
  * drag reducer
  */
-const drag = (state:DraggableComponentProps, action:Action):DraggableComponentProps => {
+const handleDrag = (state:State, action:Action):State => {
     if(action.type === 'drag') {
         return {
             ...state,
@@ -66,13 +101,36 @@ const drag = (state:DraggableComponentProps, action:Action):DraggableComponentPr
 /**
  * resize reducer
  */
-const resize = (state:DraggableComponentProps, action:Action):DraggableComponentProps => {
+const handleResize = (state:State, action:Action):State => {
     if(action.type === 'resize') {
         return {
             ...state,
             width: action.width,
             height: action.height
-        }
+        };
     }
     return state;
+}
+
+/**
+ * mouseUp reducer
+ */
+const handleMouseUp = (state:State, action:Action):State => {
+    if(action.type === 'mouseUp') {
+        return {
+            ...state,
+            dragging: false
+        };
+    }
+    return state;
+}
+
+/**
+ * ResizePointProps 更改宽高属性的事件
+ */
+export interface ResizePointProps {
+    top: number | string,
+    left: number | string,
+    cursor: string,
+    onDragging: (offsetX: number, offsetY: number) => void
 }

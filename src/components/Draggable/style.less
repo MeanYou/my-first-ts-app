@@ -1,4 +1,18 @@
 .draggable {
-    border: 1px solid green;
+    background-color: #5b9bd5;
     position: absolute;
+    box-sizing: border-box;
+    border: 2px solid #4050bf;
+    cursor: grab;
+
+    .draggable__resize {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #00f;
+        background-color: #fff;
+        border-radius: 50%;
+        position: absolute;
+        margin-left: -10px;
+        margin-top: -10px;
+    }
 }

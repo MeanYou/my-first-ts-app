@@ -1,37 +1,94 @@
 import * as React from 'react';
-import { reducer } from './store';
-import { DraggableComponentProps } from "./store";
+import { reducer, DraggableProps, ResizePointProps } from "./store";
 import './style.less';
 
-const { useReducer } = React;
+const { useReducer, useState } = React;
 
-const Draggable = ({ width=300, height=300, top=0, left=0, selected=true, onDragStart, onDragging, onDragEnd }: DraggableComponentProps) => {
-    const [state, dispatch] = useReducer(reducer, { width, height, top, left, selected });
-    console.log(state, dispatch);
+const Draggable = ({ id, containerWidth, containerHeight, width=300, height=300, top=0, left=0, selected=0, onSelect, onDragging, onDragEnd }:DraggableProps) => {
+    const [state, dispatch] = useReducer(reducer, { width, height, top, left, dragging: false });
 
-    const handleDragStart = (e:React.DragEvent):void => {
-        // e.preventDefault();
-        onDragStart && onDragStart({x: e.screenX, y: e.screenY});
+    // 鼠标按下
+    const handleMouseDown = (e:React.MouseEvent):void => {
+        e.preventDefault();
+        onSelect && onSelect(id);
+        dispatch({type: 'mouseDown'});
     }
-    const handleDragging = (e:React.DragEvent):void => {
-        // e.preventDefault();
-        console.log(e);
-        onDragging && onDragging({x: e.screenX, y: e.screenY});
+    // 鼠标移动
+    const handleDragging = (e:React.MouseEvent):void => {
+        e.preventDefault();
+        if(state.dragging) {
+            onDragging && onDragging({x: 0, y: 0});
+            let top = state.top + e.movementY;
+            let left = state.left + e.movementX;
+            top = (top > 0) ? ((top < containerHeight - state.height) ? top : (containerHeight - state.height)) : 0;
+            left = (left > 0) ? ((left < containerWidth - state.width) ? left : (containerWidth - state.width)) : 0;
+            dispatch({type: 'drag', top, left});
+        }
     }
-    const handleDragEnd = (e:React.DragEvent):void => {
-        // e.preventDefault();
-        onDragEnd && onDragEnd({x: e.screenX, y: e.screenY});
+    // 鼠标松手
+    const handleMouseUp = (e:React.MouseEvent):void => {
+        e.preventDefault();
+        onDragEnd && onDragEnd({x: 0, y: 0});
+        dispatch({type: 'mouseUp'});
+    }
+    // 调整尺寸
+    const handleResize = (x:number, y:number) => {
+        dispatch({type: 'resize', width: state.width + x, height: state.height + y});
     }
 
     return (
         <div
-            draggable
             className="draggable"
-            style={{ width: width, height: height, top: top, left: left}}
-            onDragStart={ handleDragStart }
-            onDrag={ handleDragging }
-            onDragEnd={ handleDragEnd }
-        ></div>
+            style={{ width: state.width, height: state.height, top: state.top, left: state.left, zIndex: id }}
+            onMouseDown={ handleMouseDown }
+            onMouseMove={ handleDragging }
+            onMouseUp={ handleMouseUp }
+            onMouseLeave={ handleMouseUp }>
+            {
+                id === selected ? (
+                    <div>
+                        <ResizePoint top={0} left={0} cursor="nw-resize" onDragging={ handleResize }></ResizePoint>
+                        <ResizePoint top={0} left={'50%'} cursor="ns-resize" onDragging={ handleResize }></ResizePoint>
+                        <ResizePoint top={0} left={'100%'} cursor="ne-resize" onDragging={ handleResize }></ResizePoint>
+                        <ResizePoint top={'50%'} left={0} cursor="w-resize" onDragging={ handleResize }></ResizePoint>
+                        <ResizePoint top={'50%'} left={'100%'} cursor="w-resize" onDragging={ handleResize }></ResizePoint>
+                        <ResizePoint top={'100%'} left={0} cursor="sw-resize" onDragging={ handleResize }></ResizePoint>
+                        <ResizePoint top={'100%'} left={'50%'} cursor="ns-resize" onDragging={ handleResize }></ResizePoint>
+                        <ResizePoint top={'100%'} left={'100%'} cursor="se-resize" onDragging={ handleResize }></ResizePoint>
+                    </div>
+                ) : null
+            }
+            
+        </div>
+    );
+}
+
+const ResizePoint = (props:ResizePointProps) => {
+    const [dragging, setDragging] = useState(false);
+    
+    return (
+        <div
+            className="draggable__resize"
+            style={{ top: props.top, left: props.left, cursor: props.cursor }}
+            onMouseDown={() => {
+                setDragging(true);
+            }}
+            onMouseMove={(e) => {
+                if(dragging) {
+                    props.onDragging(e.movementX, e.movementY);
+                    e.stopPropagation();
+                }
+            }}
+            onMouseOut={(e) => {
+                if(dragging) {
+                    console.log(e.movementX);
+                    props.onDragging(e.movementX, e.movementY);
+                    e.stopPropagation();
+                }
+            }}
+            onMouseUp={() => {
+                setDragging(false);
+            }}></div>
     );
 }
 
