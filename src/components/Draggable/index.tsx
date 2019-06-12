@@ -7,30 +7,30 @@ const { useReducer, useState } = React;
 const Draggable = ({ id, containerWidth, containerHeight, width=300, height=300, top=0, left=0, selected=0, onSelect, onDragging, onDragEnd }:DraggableProps) => {
     const [state, dispatch] = useReducer(reducer, { width, height, top, left, dragging: false });
 
-    // 鼠标按下
-    const handleMouseDown = (e:React.MouseEvent):void => {
-        e.preventDefault();
-        onSelect && onSelect(id);
-        dispatch({type: 'mouseDown'});
-    }
-    // 鼠标移动
-    const handleDragging = (e:React.MouseEvent):void => {
-        e.preventDefault();
-        if(state.dragging) {
-            onDragging && onDragging({x: 0, y: 0});
-            let top = state.top + e.movementY;
-            let left = state.left + e.movementX;
-            top = (top > 0) ? ((top < containerHeight - state.height) ? top : (containerHeight - state.height)) : 0;
-            left = (left > 0) ? ((left < containerWidth - state.width) ? left : (containerWidth - state.width)) : 0;
-            dispatch({type: 'drag', top, left});
-        }
-    }
-    // 鼠标松手
-    const handleMouseUp = (e:React.MouseEvent):void => {
-        e.preventDefault();
-        onDragEnd && onDragEnd({x: 0, y: 0});
-        dispatch({type: 'mouseUp'});
-    }
+    // // 鼠标按下
+    // const handleMouseDown = (e:React.MouseEvent):void => {
+    //     e.preventDefault();
+    //     onSelect && onSelect(id);
+    //     dispatch({type: 'mouseDown'});
+    // }
+    // // 鼠标移动
+    // const handleDragging = (e:React.MouseEvent):void => {
+    //     e.preventDefault();
+    //     if(state.dragging) {
+    //         onDragging && onDragging({x: 0, y: 0});
+    //         let top = state.top + e.movementY;
+    //         let left = state.left + e.movementX;
+    //         top = (top > 0) ? ((top < containerHeight - state.height) ? top : (containerHeight - state.height)) : 0;
+    //         left = (left > 0) ? ((left < containerWidth - state.width) ? left : (containerWidth - state.width)) : 0;
+    //         dispatch({type: 'drag', top, left});
+    //     }
+    // }
+    // // 鼠标松手
+    // const handleMouseUp = (e:React.MouseEvent):void => {
+    //     e.preventDefault();
+    //     onDragEnd && onDragEnd({x: 0, y: 0});
+    //     dispatch({type: 'mouseUp'});
+    // }
     // 调整尺寸
     const handleResize = (x:number, y:number) => {
         dispatch({type: 'resize', width: state.width + x, height: state.height + y});
@@ -38,12 +38,14 @@ const Draggable = ({ id, containerWidth, containerHeight, width=300, height=300,
 
     return (
         <div
+            id={ id.toString() }
             className="draggable"
             style={{ width: state.width, height: state.height, top: state.top, left: state.left, zIndex: id }}
-            onMouseDown={ handleMouseDown }
-            onMouseMove={ handleDragging }
-            onMouseUp={ handleMouseUp }
-            onMouseLeave={ handleMouseUp }>
+            // onMouseDown={ handleMouseDown }
+            // onMouseMove={ handleDragging }
+            // onMouseUp={ handleMouseUp }
+            // onMouseLeave={ handleMouseUp }
+            >
             {
                 id === selected ? (
                     <div>
