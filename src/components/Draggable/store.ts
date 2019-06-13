@@ -3,16 +3,11 @@
  */
 export interface DraggableProps {
     id: number,
-    containerWidth: number,
-    containerHeight: number,
-    width?: number,
-    height?: number,
-    top?: number,
-    left?: number,
-    selected?: number,
-    onSelect?: (selected: number) => void,
-    onDragging?: (arg: Position) => void,
-    onDragEnd?: (arg: Position) => void,
+    selected: number,
+    width: number,
+    height: number,
+    top: number,
+    left: number
 };
 
 /**
@@ -131,6 +126,5 @@ const handleMouseUp = (state:State, action:Action):State => {
 export interface ResizePointProps {
     top: number | string,
     left: number | string,
-    cursor: string,
-    onDragging: (offsetX: number, offsetY: number) => void
+    cursor: string
 }
