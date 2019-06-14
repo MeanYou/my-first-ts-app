@@ -23,7 +23,8 @@ export interface State {
     resizerLeft: string,
     resizerTop: string,
     containerWidth: number,
-    containerHeight: number
+    containerHeight: number,
+    capture: boolean
 }
 
 /**
