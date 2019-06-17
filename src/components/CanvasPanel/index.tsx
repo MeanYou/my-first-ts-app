@@ -56,7 +56,7 @@ const CanvasPanel = ({draggableList}:CanvasPanelProps) => {
                 myRuler.api.clearGuides();
             }
         }
-    }, [state.draggableList]);
+    }, [state.draggableList, state.capturedX, state.capturedY]);
 
     const handleSelect = (selected:number) => {
         dispatch({type: 'handleSelect', selected});
