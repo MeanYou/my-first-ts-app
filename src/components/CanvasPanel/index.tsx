@@ -1,29 +1,14 @@
 import * as React from 'react';
 import Draggable from '../Draggable';
-import { reducer, CanvasPanelProps } from './store';
-import { DraggableProps } from '../Draggable/store';
+import { reducer, initialState, CanvasPanelProps } from './store';
 
 const ruler = require('ruler');
 let myRuler:any;
 const { useEffect, useReducer } = React;
 
 const CanvasPanel = ({draggableList}:CanvasPanelProps) => {
-    const list:Array<DraggableProps> = [{
-        id: 1,
-        selected: 0,
-        top: 10,
-        left: 20,
-        width: 300,
-        height: 300
-    },{
-        id: 2,
-        selected: 0,
-        top: 300,
-        left: 300,
-        width: 100,
-        height: 200
-    }];
-    const [state, dispatch] = useReducer(reducer, { draggableList: list, selected:0, moving: false, resizing: false, resizerLeft: '0%', resizerTop: '0%', containerWidth: 1833.33, containerHeight: 600, capture: false });
+    
+    const [state, dispatch] = useReducer(reducer, initialState);
 
     // 初始化尺子
     useEffect(() => {
@@ -44,68 +29,27 @@ const CanvasPanel = ({draggableList}:CanvasPanelProps) => {
     // guideline显示
     useEffect(() => {
         if(state.selected !== 0) {
-            let match = false;
             const selected = state.draggableList[state.selected - 1];
             const guideLines = [];
-            let guideLineX1;
-            let guideLineX2;
-            let guideLineY1;
-            let guideLineY2;
-            // 当前左侧和右侧
-            const currentLeft = selected.left;
-            const currentRight = currentLeft + selected.width;
-            // 当前顶部和底部
-            const currentTop = selected.top;
-            const currentBottom = currentTop + selected.height;
-            for (let i = 0; i < state.draggableList.length; i++) {
-                if(i === state.selected - 1) continue;
-                const item = state.draggableList[i];
-                const itemLeft = item.left;
-                const itemRight = itemLeft + item.width;
-                const itemTop = item.top;
-                const itemBottom = itemTop + item.height;
-                if(state.capture) {
-
-                } else {
-                    if(currentLeft === itemLeft || currentLeft === itemRight) {
-                        match = true;
-                        guideLineX1 = {
-                            dimension: 1,
-                            posX: currentLeft - 15,
-                            posY: -15
-                        };
-                    }
-                    if(currentRight === itemLeft || currentRight === itemRight) {
-                        match = true;
-                        guideLineX2 = {
-                            dimension: 1,
-                            posX: currentRight - 15,
-                            posY: -15
-                        };
-                    }
-                    if(currentTop === itemTop || currentTop === itemBottom) {
-                        match = true;
-                        guideLineY1 = {
-                            dimension: 2,
-                            posX: -15,
-                            posY: currentTop - 15
-                        };
-                    }
-                    if(currentBottom === itemTop || currentBottom === itemBottom) {
-                        match = true;
-                        guideLineY2 = {
-                            dimension: 2,
-                            posX: -15,
-                            posY: currentBottom - 15
-                        };
-                    }
-                }
+            let guideLineX;
+            let guideLineY;
+            if(state.capturedX) {
+                guideLineX = {
+                    dimension: 1,
+                    posX: selected.left - 15,
+                    posY: -15
+                };
             }
-            guideLineX1 && guideLines.push(guideLineX1);
-            guideLineX2 && guideLines.push(guideLineX2);
-            guideLineY1 && guideLines.push(guideLineY1);
-            guideLineY2 && guideLines.push(guideLineY2);
-            if(match) {
+            if(state.capturedY) {
+                guideLineY = {
+                    dimension: 2,
+                    posX: -15,
+                    posY: selected.top - 15
+                };
+            }
+            guideLineX && guideLines.push(guideLineX);
+            guideLineY && guideLines.push(guideLineY);
+            if(guideLines.length > 0) {
                 myRuler.api.clearGuides();
                 myRuler.api.setGuides(guideLines);
             } else {
