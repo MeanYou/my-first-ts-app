@@ -36,7 +36,7 @@ const CanvasPanel = ({draggableList}:CanvasPanelProps) => {
             if(state.capturedX) {
                 guideLineX = {
                     dimension: 1,
-                    posX: selected.left - 15,
+                    posX: state.capturedLeft ? selected.left - 15 : selected.left + selected.width - 15,
                     posY: -15
                 };
             }
@@ -44,7 +44,7 @@ const CanvasPanel = ({draggableList}:CanvasPanelProps) => {
                 guideLineY = {
                     dimension: 2,
                     posX: -15,
-                    posY: selected.top - 15
+                    posY: state.capturedTop ? selected.top - 15 : selected.top + selected.height - 15
                 };
             }
             guideLineX && guideLines.push(guideLineX);

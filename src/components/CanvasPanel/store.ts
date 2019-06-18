@@ -26,7 +26,9 @@ export interface State {
     containerHeight: number,
     capturable: boolean,
     capturedX: boolean,
-    capturedY: boolean
+    capturedLeft: boolean,
+    capturedY: boolean,
+    capturedTop: boolean
 }
 
 /**
@@ -54,11 +56,13 @@ export const initialState = {
     resizing: false,
     resizerLeft: '0%',
     resizerTop: '0%',
-    containerWidth: 1833.33,
+    containerWidth: 1620,
     containerHeight: 600,
     capturable: true,
     capturedX: false,
-    capturedY: false
+    capturedLeft: true,
+    capturedY: false,
+    capturedTop: true
 };
 
 /**
@@ -113,13 +117,17 @@ const handleMoving = (state: State, action: Action): State => {
         left = left > 0 ? ((left < state.containerWidth - (list[state.selected - 1].width as number)) ? left : (state.containerWidth - (list[state.selected - 1].width as number))) : 0;
         top = top > 0 ? ((top < state.containerHeight - (list[state.selected - 1].height as number)) ? top : (state.containerHeight - (list[state.selected - 1].height as number))) : 0;
         let capturedX = false;
+        let capturedLeft = true;
         let capturedY = false;
+        let capturedTop = true;
         if(state.capturable) {
             let res = shouldCapture(left, top, state.selected - 1, list);
             left = res.left;
             top = res.top;
             capturedX = res.capturedX;
+            capturedLeft = res.capturedLeft;
             capturedY = res.capturedY;
+            capturedTop = res.capturedTop;
         }
         list[state.selected - 1].left = left;
         list[state.selected - 1].top = top;
@@ -127,7 +135,9 @@ const handleMoving = (state: State, action: Action): State => {
             ...state,
             draggableList: list,
             capturedX,
-            capturedY
+            capturedLeft,
+            capturedY,
+            capturedTop
         };
     }
     return state;
@@ -160,19 +170,53 @@ const handleResizing = (state: State, action: Action): State => {
         const index = state.selected - 1;
         // list[index].width = list[index].width + action.movementX;
         // list[index].height = list[index].height + action.movementY;
-        if (state.resizerLeft === '0%' && list[index].width - action.movementX > MIN_WIDTH) {
-            list[index].width = list[index].width - action.movementX;
-            list[index].left = list[index].left + action.movementX;
+        if (state.resizerLeft === '0%') {
+            let width = list[index].width - action.movementX;
+            let left = list[index].left + action.movementX;
+            if(width < MIN_WIDTH) {
+                width = MIN_WIDTH;
+                left = left - action.movementX
+            }
+            if(left < 0) {
+                width = width + left;
+                left = 0;
+            }
+            list[index].width = width;
+            list[index].left = left;
         }
-        if (state.resizerLeft === '100%' && list[index].width + action.movementX > MIN_WIDTH) {
-            list[index].width = list[index].width + action.movementX;
+        if (state.resizerLeft === '100%') {
+            let width = list[index].width + action.movementX;
+            if(width < MIN_WIDTH) {
+                width = MIN_WIDTH;
+            }
+            if(width + list[index].left > state.containerWidth) {
+                width = state.containerWidth - list[index].left;
+            }
+            list[index].width = width;
         }
-        if (state.resizerTop === '0%' && list[index].height - action.movementY > MIN_HEIGHT) {
-            list[index].height = list[index].height - action.movementY;
-            list[index].top = list[index].top + action.movementY;
+        if (state.resizerTop === '0%') {
+            let height = list[index].height - action.movementY;
+            let top = list[index].top + action.movementY;
+            if(height < MIN_HEIGHT) {
+                height = MIN_HEIGHT;
+                top = top - action.movementY;
+            }
+            if(top < 0) {
+                height = height + top;
+                top = 0;
+            }
+            list[index].height = height;
+            list[index].top = top;
         }
-        if (state.resizerTop === '100%' && list[index].height + action.movementY > MIN_HEIGHT) {
-            list[index].height = list[index].height + action.movementY;
+        if (state.resizerTop === '100%') {
+            let height = list[index].height + action.movementY;
+            if(height < MIN_HEIGHT) {
+                height = MIN_HEIGHT;
+            }
+            if(height + list[index].top > state.containerHeight) {
+                height = state.containerHeight - list[index].top;
+            }
+            list[index].height = height;
         }
 
         return {
@@ -217,18 +261,26 @@ interface ResProps {
     left: number,
     top: number,
     capturedX: boolean,
-    capturedY: boolean
+    capturedMovementX: number,
+    capturedLeft: boolean,
+    capturedY: boolean,
+    capturedMovementY: number,
+    capturedTop: boolean
 }
 /**
  * 判断是否到达捕获位置
  */
 function shouldCapture(left:number, top:number, index:number, list:Array<DraggableProps>):ResProps {
-    const captureTolerance = 10;// 捕捉容差
+    const captureTolerance = 3;// 捕捉容差
     const res:ResProps = {
         left: left,
         top: top,
         capturedX: false,
-        capturedY: false
+        capturedMovementX: 0,
+        capturedLeft: true,
+        capturedY: false,
+        capturedMovementY: 0,
+        capturedTop: true
     };
     const selected = list[index];
     const right = left + selected.width;
@@ -245,35 +297,47 @@ function shouldCapture(left:number, top:number, index:number, list:Array<Draggab
         if(Math.abs(left - itemLeft) <= captureTolerance) {
             res.left = itemLeft;
             res.capturedX = true;
+            res.capturedMovementX = left - itemLeft;
         }
         if(!res.capturedX && Math.abs(left - itemRight) <= captureTolerance) {
             res.left = itemRight;
             res.capturedX = true;
+            res.capturedMovementX = left - itemRight;
         }
         if(!res.capturedX && Math.abs(right - itemLeft) <= captureTolerance) {
             res.left = itemLeft - selected.width;
             res.capturedX = true;
+            res.capturedMovementX = right - itemRight;
+            res.capturedLeft = false;
         }
         if(!res.capturedX && Math.abs(right - itemRight) <= captureTolerance) {
             res.left = itemRight - selected.width;
             res.capturedX = true;
+            res.capturedMovementX = right - itemRight;
+            res.capturedLeft = false;
         }
         // 捕捉Y轴
         if(Math.abs(top - itemTop) <= captureTolerance) {
             res.top = itemTop;
             res.capturedY = true;
+            res.capturedMovementY = top - itemTop;
         }
         if(!res.capturedY && Math.abs(top - itemBottom) <= captureTolerance) {
             res.top = itemBottom;
             res.capturedY = true;
+            res.capturedMovementY = top - itemBottom;
         }
         if(!res.capturedY && Math.abs(bottom - itemTop) <= captureTolerance) {
             res.top = itemTop - selected.height;
             res.capturedY = true;
+            res.capturedMovementY = bottom - itemTop;
+            res.capturedTop = false;
         }
         if(!res.capturedY && Math.abs(bottom - itemBottom) <= captureTolerance) {
             res.top = itemBottom - selected.height;
             res.capturedY = true;
+            res.capturedMovementY = bottom - itemBottom;
+            res.capturedTop = false;
         }
     }
     return res;
