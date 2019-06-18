@@ -4,7 +4,7 @@ import './style.less';
 
 // const { useReducer } = React;
 
-const Draggable = ({ id, width, height, top, left, selected }:DraggableProps) => {
+const Draggable = ({ id, width, height, left, top, right, bottom, selected }:DraggableProps) => {
     // const [state, dispatch] = useReducer(reducer, { width, height, top, left, dragging: false });
 
     // // 鼠标按下
@@ -40,7 +40,7 @@ const Draggable = ({ id, width, height, top, left, selected }:DraggableProps) =>
         <div
             id={ id.toString() }
             className="draggable"
-            style={{ width, height, top, left, zIndex: id }}
+            style={{ width, height, left: left < 0 ? 'auto' : left, top: top < 0 ? 'auto' : top, right, bottom, zIndex: id }}
             // onMouseDown={ handleMouseDown }
             // onMouseMove={ handleDragging }
             // onMouseUp={ handleMouseUp }

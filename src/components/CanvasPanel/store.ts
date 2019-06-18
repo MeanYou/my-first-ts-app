@@ -4,6 +4,7 @@ import { DraggableProps } from '../Draggable/store';
  */
 export const MIN_WIDTH = 100;
 export const MIN_HEIGHT = 100;
+export const CAPTURE_TOLERANCE = 1;// 捕捉容差
 
 /**
  * CanvasPanel属性
@@ -37,17 +38,39 @@ export interface State {
 const list:Array<DraggableProps> = [{
     id: 1,
     selected: 0,
-    top: 10,
-    left: 20,
-    width: 300,
-    height: 300
+    top: 50,
+    left: 50,
+    right: 0,
+    bottom: 0,
+    width: 100,
+    height: 100
 },{
     id: 2,
     selected: 0,
-    top: 300,
-    left: 300,
+    top: 50,
+    left: 150,
+    right: 0,
+    bottom: 0,
     width: 100,
-    height: 200
+    height: 100
+},{
+    id: 3,
+    selected: 0,
+    top: 50,
+    left: 250,
+    right: 0,
+    bottom: 0,
+    width: 100,
+    height: 100
+},{
+    id: 4,
+    selected: 0,
+    top: 50,
+    left: 350,
+    right: 0,
+    bottom: 0,
+    width: 100,
+    height: 100
 }];
 export const initialState = {
     draggableList: list,
@@ -121,7 +144,7 @@ const handleMoving = (state: State, action: Action): State => {
         let capturedY = false;
         let capturedTop = true;
         if(state.capturable) {
-            let res = shouldCapture(left, top, state.selected - 1, list);
+            let res = shouldCaptureMoving(left, top, state.selected - 1, list);
             left = res.left;
             top = res.top;
             capturedX = res.capturedX;
@@ -171,11 +194,12 @@ const handleResizing = (state: State, action: Action): State => {
         // list[index].width = list[index].width + action.movementX;
         // list[index].height = list[index].height + action.movementY;
         if (state.resizerLeft === '0%') {
+            // 该计算方式为了避免在左上边缘处鼠标移动left为0时，导致宽度增加的问题，top影响高度同理
             let width = list[index].width - action.movementX;
             let left = list[index].left + action.movementX;
             if(width < MIN_WIDTH) {
                 width = MIN_WIDTH;
-                left = left - action.movementX
+                left = left - action.movementX;
             }
             if(left < 0) {
                 width = width + left;
@@ -270,8 +294,7 @@ interface ResProps {
 /**
  * 判断是否到达捕获位置
  */
-function shouldCapture(left:number, top:number, index:number, list:Array<DraggableProps>):ResProps {
-    const captureTolerance = 3;// 捕捉容差
+function shouldCaptureMoving(left:number, top:number, index:number, list:Array<DraggableProps>):ResProps {
     const res:ResProps = {
         left: left,
         top: top,
@@ -294,46 +317,46 @@ function shouldCapture(left:number, top:number, index:number, list:Array<Draggab
         const itemBottom = itemTop + item.height;
 
         // 捕捉X轴
-        if(Math.abs(left - itemLeft) <= captureTolerance) {
+        if(Math.abs(left - itemLeft) <= CAPTURE_TOLERANCE) {
             res.left = itemLeft;
             res.capturedX = true;
             res.capturedMovementX = left - itemLeft;
         }
-        if(!res.capturedX && Math.abs(left - itemRight) <= captureTolerance) {
+        if(!res.capturedX && Math.abs(left - itemRight) <= CAPTURE_TOLERANCE) {
             res.left = itemRight;
             res.capturedX = true;
             res.capturedMovementX = left - itemRight;
         }
-        if(!res.capturedX && Math.abs(right - itemLeft) <= captureTolerance) {
+        if(!res.capturedX && Math.abs(right - itemLeft) <= CAPTURE_TOLERANCE) {
             res.left = itemLeft - selected.width;
             res.capturedX = true;
             res.capturedMovementX = right - itemRight;
             res.capturedLeft = false;
         }
-        if(!res.capturedX && Math.abs(right - itemRight) <= captureTolerance) {
+        if(!res.capturedX && Math.abs(right - itemRight) <= CAPTURE_TOLERANCE) {
             res.left = itemRight - selected.width;
             res.capturedX = true;
             res.capturedMovementX = right - itemRight;
             res.capturedLeft = false;
         }
         // 捕捉Y轴
-        if(Math.abs(top - itemTop) <= captureTolerance) {
+        if(Math.abs(top - itemTop) <= CAPTURE_TOLERANCE) {
             res.top = itemTop;
             res.capturedY = true;
             res.capturedMovementY = top - itemTop;
         }
-        if(!res.capturedY && Math.abs(top - itemBottom) <= captureTolerance) {
+        if(!res.capturedY && Math.abs(top - itemBottom) <= CAPTURE_TOLERANCE) {
             res.top = itemBottom;
             res.capturedY = true;
             res.capturedMovementY = top - itemBottom;
         }
-        if(!res.capturedY && Math.abs(bottom - itemTop) <= captureTolerance) {
+        if(!res.capturedY && Math.abs(bottom - itemTop) <= CAPTURE_TOLERANCE) {
             res.top = itemTop - selected.height;
             res.capturedY = true;
             res.capturedMovementY = bottom - itemTop;
             res.capturedTop = false;
         }
-        if(!res.capturedY && Math.abs(bottom - itemBottom) <= captureTolerance) {
+        if(!res.capturedY && Math.abs(bottom - itemBottom) <= CAPTURE_TOLERANCE) {
             res.top = itemBottom - selected.height;
             res.capturedY = true;
             res.capturedMovementY = bottom - itemBottom;
@@ -342,3 +365,7 @@ function shouldCapture(left:number, top:number, index:number, list:Array<Draggab
     }
     return res;
 }
+
+// function shouldCaptureResizing() {
+    
+// }

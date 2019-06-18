@@ -6,8 +6,10 @@ export interface DraggableProps {
     selected: number,
     width: number,
     height: number,
+    left: number,
+    right: number,
     top: number,
-    left: number
+    bottom: number
 };
 
 /**
