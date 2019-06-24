@@ -4,7 +4,7 @@ import { DraggableProps } from '../Draggable/store';
  */
 export const MIN_WIDTH = 100;
 export const MIN_HEIGHT = 100;
-export const CAPTURE_TOLERANCE = 1;// 捕捉容差
+export const CAPTURE_TOLERANCE = 3;// 捕捉容差
 
 /**
  * CanvasPanel属性
@@ -29,7 +29,9 @@ export interface State {
     capturedX: boolean,
     capturedLeft: boolean,
     capturedY: boolean,
-    capturedTop: boolean
+    capturedTop: boolean,
+    showMenu: boolean,
+    menuPosition: {left: number, top: number}
 }
 
 /**
@@ -79,13 +81,18 @@ export const initialState = {
     resizing: false,
     resizerLeft: '0%',
     resizerTop: '0%',
-    containerWidth: 1620,
+    containerWidth: 1600,
     containerHeight: 600,
     capturable: true,
     capturedX: false,
     capturedLeft: true,
     capturedY: false,
-    capturedTop: true
+    capturedTop: true,
+    showMenu: false,
+    menuPosition: {
+        left: 0,
+        top: 0
+    }
 };
 
 /**
@@ -112,6 +119,13 @@ export type Action = {
     movementY: number
 } | {
     type: 'handleResizeEnd'
+} | {
+    type: 'handleToggleCapture'
+} | {
+    type: 'handleToggleMenu',
+    showMenu: boolean,
+    left?: number,
+    top?: number
 }
 
 const handleSelect = (state: State, action: Action): State => {
@@ -178,9 +192,20 @@ const handleMoveEnd = (state: State, action: Action): State => {
 };
 const handleResizeStart = (state: State, action: Action): State => {
     if (action.type === 'handleResizeStart') {
+        const list = [...state.draggableList];
+        const index = state.selected - 1;
+        if(action.resizerLeft === '0%') {
+            list[index].right = state.containerWidth - list[index].left - list[index].width;
+            list[index].left = -1;
+        }
+        if(action.resizerTop === '0%') {
+            list[index].bottom = state.containerHeight - list[index].top - list[index].height;
+            list[index].top = -1;
+        }
         return {
             ...state,
             resizing: true,
+            draggableList: list,
             resizerLeft: action.resizerLeft,
             resizerTop: action.resizerTop
         }
@@ -191,70 +216,141 @@ const handleResizing = (state: State, action: Action): State => {
     if (action.type === 'handleResizing') {
         const list = [...state.draggableList];
         const index = state.selected - 1;
+        let width = list[index].width;
+        let height = list[index].height;
+        if(state.resizerLeft === '0%') {
+            width = width - action.movementX;
+        }
+        if(state.resizerLeft === '100%') {
+            width = width + action.movementX;
+        }
+        if(state.resizerTop === '0%') {
+            height = height - action.movementY;
+        }
+        if(state.resizerTop === '100%') {
+            height = height + action.movementY;
+        }
+        if(width < MIN_WIDTH) {
+            width = MIN_WIDTH;
+        }
+        if(height < MIN_HEIGHT) {
+            height = MIN_HEIGHT;
+        }
+        let capturedX = false;
+        let capturedLeft = true;
+        let capturedY = false;
+        let capturedTop = true;
+        if(state.capturable) {
+            const res = shouldCaptureResizing(width, height, list, index, state.containerWidth, state.containerHeight);
+            width = res.width;
+            height = res.height;
+            capturedX = res.capturedX;
+            capturedLeft = res.capturedLeft;
+            capturedY = res.capturedY;
+            capturedTop = res.capturedTop;
+        }
+        list[index].width = width;
+        list[index].height = height;
         // list[index].width = list[index].width + action.movementX;
         // list[index].height = list[index].height + action.movementY;
-        if (state.resizerLeft === '0%') {
-            // 该计算方式为了避免在左上边缘处鼠标移动left为0时，导致宽度增加的问题，top影响高度同理
-            let width = list[index].width - action.movementX;
-            let left = list[index].left + action.movementX;
-            if(width < MIN_WIDTH) {
-                width = MIN_WIDTH;
-                left = left - action.movementX;
-            }
-            if(left < 0) {
-                width = width + left;
-                left = 0;
-            }
-            list[index].width = width;
-            list[index].left = left;
-        }
-        if (state.resizerLeft === '100%') {
-            let width = list[index].width + action.movementX;
-            if(width < MIN_WIDTH) {
-                width = MIN_WIDTH;
-            }
-            if(width + list[index].left > state.containerWidth) {
-                width = state.containerWidth - list[index].left;
-            }
-            list[index].width = width;
-        }
-        if (state.resizerTop === '0%') {
-            let height = list[index].height - action.movementY;
-            let top = list[index].top + action.movementY;
-            if(height < MIN_HEIGHT) {
-                height = MIN_HEIGHT;
-                top = top - action.movementY;
-            }
-            if(top < 0) {
-                height = height + top;
-                top = 0;
-            }
-            list[index].height = height;
-            list[index].top = top;
-        }
-        if (state.resizerTop === '100%') {
-            let height = list[index].height + action.movementY;
-            if(height < MIN_HEIGHT) {
-                height = MIN_HEIGHT;
-            }
-            if(height + list[index].top > state.containerHeight) {
-                height = state.containerHeight - list[index].top;
-            }
-            list[index].height = height;
-        }
+        // if (state.resizerLeft === '0%') {
+        //     let width = list[index].width - action.movementX;
+        //     if(width < MIN_WIDTH) {
+        //         width = MIN_WIDTH;
+        //     }
+        //     if(width > state.containerWidth - )
+        //     list[index].width = width;
+        // }
+        // if (state.resizerLeft === '100%') {
+        //     let width = list[index].width + action.movementX;
+        //     if(width < MIN_WIDTH) {
+        //         width = MIN_WIDTH;
+        //     }
+        //     if(width + list[index].left > state.containerWidth) {
+        //         width = state.containerWidth - list[index].left;
+        //     }
+        //     list[index].width = width;
+        // }
+        // if (state.resizerTop === '0%') {
+        //     let height = list[index].height - action.movementY;
+        //     let top = list[index].top + action.movementY;
+        //     if(height < MIN_HEIGHT) {
+        //         height = MIN_HEIGHT;
+        //         top = top - action.movementY;
+        //     }
+        //     if(top < 0) {
+        //         height = height + top;
+        //         top = 0;
+        //     }
+        //     list[index].height = height;
+        //     list[index].top = top;
+        // }
+        // if (state.resizerTop === '100%') {
+        //     let height = list[index].height + action.movementY;
+        //     if(height < MIN_HEIGHT) {
+        //         height = MIN_HEIGHT;
+        //     }
+        //     if(height + list[index].top > state.containerHeight) {
+        //         height = state.containerHeight - list[index].top;
+        //     }
+        //     list[index].height = height;
+        // }
 
         return {
             ...state,
-            draggableList: list
+            draggableList: list,
+            capturedX,
+            capturedLeft,
+            capturedY,
+            capturedTop
         };
     }
     return state;
 }
 const handleResizeEnd = (state: State, action: Action): State => {
     if (action.type === 'handleResizeEnd') {
+        const index = state.selected - 1;
+        if(index > - 1) {
+            const list = [...state.draggableList];
+            if(list[index].left === -1) {
+                list[index].left = state.containerWidth - list[index].right - list[index].width;
+            }
+            if(list[index].top === -1) {
+                list[index].top = state.containerHeight - list[index].bottom - list[index].height;
+            }
+            return {
+                ...state,
+                draggableList: list,
+                resizing: false
+            }
+        } else {
+            return {
+                ...state,
+                resizing: false
+            }
+        }
+        
+    }
+    return state;
+}
+const handleToggleCapture = (state: State, action: Action): State => {
+    if(action.type === 'handleToggleCapture') {
         return {
             ...state,
-            resizing: false
+            capturable: !state.capturable
+        }
+    }
+    return state;
+}
+const handleToggleMenu = (state:State, action:Action): State => {
+    if(action.type === 'handleToggleMenu') {
+        return {
+            ...state,
+            showMenu: action.showMenu,
+            menuPosition: {
+                left: action.left || 0,
+                top: action.top || 0
+            }
         }
     }
     return state;
@@ -276,33 +372,33 @@ export const reducer = (state: State, action: Action) => {
             return handleResizing(state, action);
         case 'handleResizeEnd':
             return handleResizeEnd(state, action);
+        case 'handleToggleCapture':
+            return handleToggleCapture(state, action);
+        case 'handleToggleMenu':
+            return handleToggleMenu(state, action);
         default:
             return state;
     }
 };
 
-interface ResProps {
+interface MovingResProps {
     left: number,
     top: number,
     capturedX: boolean,
-    capturedMovementX: number,
     capturedLeft: boolean,
     capturedY: boolean,
-    capturedMovementY: number,
     capturedTop: boolean
 }
 /**
- * 判断是否到达捕获位置
+ * 判断是否move到捕获位置
  */
-function shouldCaptureMoving(left:number, top:number, index:number, list:Array<DraggableProps>):ResProps {
-    const res:ResProps = {
+function shouldCaptureMoving(left:number, top:number, index:number, list:Array<DraggableProps>):MovingResProps {
+    const res:MovingResProps = {
         left: left,
         top: top,
         capturedX: false,
-        capturedMovementX: 0,
         capturedLeft: true,
         capturedY: false,
-        capturedMovementY: 0,
         capturedTop: true
     };
     const selected = list[index];
@@ -313,59 +409,163 @@ function shouldCaptureMoving(left:number, top:number, index:number, list:Array<D
         const item = list[i];
         const itemLeft = item.left;
         const itemRight = itemLeft + item.width;
-        const itemTop = item.top;
-        const itemBottom = itemTop + item.height;
-
         // 捕捉X轴
         if(Math.abs(left - itemLeft) <= CAPTURE_TOLERANCE) {
             res.left = itemLeft;
             res.capturedX = true;
-            res.capturedMovementX = left - itemLeft;
+            break;
         }
-        if(!res.capturedX && Math.abs(left - itemRight) <= CAPTURE_TOLERANCE) {
+        if(Math.abs(left - itemRight) <= CAPTURE_TOLERANCE) {
             res.left = itemRight;
             res.capturedX = true;
-            res.capturedMovementX = left - itemRight;
+            break;
         }
-        if(!res.capturedX && Math.abs(right - itemLeft) <= CAPTURE_TOLERANCE) {
+        if(Math.abs(right - itemLeft) <= CAPTURE_TOLERANCE) {
             res.left = itemLeft - selected.width;
             res.capturedX = true;
-            res.capturedMovementX = right - itemRight;
             res.capturedLeft = false;
+            break;
         }
-        if(!res.capturedX && Math.abs(right - itemRight) <= CAPTURE_TOLERANCE) {
+        if(Math.abs(right - itemRight) <= CAPTURE_TOLERANCE) {
             res.left = itemRight - selected.width;
             res.capturedX = true;
-            res.capturedMovementX = right - itemRight;
             res.capturedLeft = false;
+            break;
         }
+    }
+    for (let i = 0; i < list.length; i++) {
+        if(i === index) continue;
+        const item = list[i];
+        const itemTop = item.top;
+        const itemBottom = itemTop + item.height;
         // 捕捉Y轴
         if(Math.abs(top - itemTop) <= CAPTURE_TOLERANCE) {
             res.top = itemTop;
             res.capturedY = true;
-            res.capturedMovementY = top - itemTop;
+            break;
         }
-        if(!res.capturedY && Math.abs(top - itemBottom) <= CAPTURE_TOLERANCE) {
+        if(Math.abs(top - itemBottom) <= CAPTURE_TOLERANCE) {
             res.top = itemBottom;
             res.capturedY = true;
-            res.capturedMovementY = top - itemBottom;
+            break;
         }
-        if(!res.capturedY && Math.abs(bottom - itemTop) <= CAPTURE_TOLERANCE) {
+        if(Math.abs(bottom - itemTop) <= CAPTURE_TOLERANCE) {
             res.top = itemTop - selected.height;
             res.capturedY = true;
-            res.capturedMovementY = bottom - itemTop;
             res.capturedTop = false;
+            break;
         }
-        if(!res.capturedY && Math.abs(bottom - itemBottom) <= CAPTURE_TOLERANCE) {
+        if(Math.abs(bottom - itemBottom) <= CAPTURE_TOLERANCE) {
             res.top = itemBottom - selected.height;
             res.capturedY = true;
-            res.capturedMovementY = bottom - itemBottom;
             res.capturedTop = false;
+            break;
         }
     }
     return res;
 }
-
-// function shouldCaptureResizing() {
+interface ResizingResProps {
+    width: number,
+    height: number,
+    capturedX: boolean,
+    capturedLeft: boolean,
+    capturedY: boolean,
+    capturedTop: boolean
+}
+/**
+ * 判断是否resize到捕获位置
+ */
+function shouldCaptureResizing(width:number, height:number, list:Array<DraggableProps>, index:number, containerWidth:number, containerHeight:number):ResizingResProps {
     
-// }
+    const selected = list[index];
+    const res = {
+        width,
+        height,
+        capturedX: false,
+        capturedLeft: true,
+        capturedY: false,
+        capturedTop: true
+    };
+    const left = selected.left === -1 ? containerWidth - selected.right - width : selected.left;
+    const right = left + width;
+    const top = selected.top === -1 ? containerHeight - selected.bottom - height : selected.top;
+    const bottom = top + height;
+    console.log(left, right, top, bottom)
+    // 捕捉X轴
+    if(selected.left === -1) {// resize左侧
+        for (let i = 0; i < list.length; i++) {
+            if(i === index) continue;
+            const item = list[i];
+            const itemLeft = item.left;
+            const itemRight = itemLeft + item.width;
+            if(Math.abs(left - itemLeft) <= CAPTURE_TOLERANCE) {
+                res.width = right - itemLeft;
+                res.capturedX = true;
+                break;
+            }
+            if(Math.abs(left - itemRight) <= CAPTURE_TOLERANCE) {
+                res.width = right - itemRight;
+                res.capturedX = true;
+                break;
+            }
+        }
+    } else {// resize右侧
+        for (let i = 0; i < list.length; i++) {
+            if(i === index) continue;
+            const item = list[i];
+            const itemLeft = item.left;
+            const itemRight = itemLeft + item.width;
+            if(Math.abs(right - itemLeft) <= CAPTURE_TOLERANCE) {
+                res.width = itemLeft - left;
+                res.capturedX = true;
+                res.capturedLeft = false;
+                break;
+            }
+            if(Math.abs(right - itemRight) <= CAPTURE_TOLERANCE) {
+                res.width = itemRight - left;
+                res.capturedX = true;
+                res.capturedLeft = false;
+                break;
+            }
+        }
+    }
+    // 捕捉Y轴
+    if(selected.top === -1) {// resize上方
+        for (let i = 0; i < list.length; i++) {
+            if(i === index) continue;
+            const item = list[i];
+            const itemTop = item.top;
+            const itemBottom = itemTop + item.height;
+            if(Math.abs(top - itemTop) <= CAPTURE_TOLERANCE) {
+                res.height = bottom - itemTop;
+                res.capturedY = true;
+                break;
+            }
+            if(Math.abs(top - itemBottom) <= CAPTURE_TOLERANCE) {
+                res.height = bottom - itemBottom;
+                res.capturedY = true;
+                break;
+            }
+        }
+    } else {// resize下方
+        for (let i = 0; i < list.length; i++) {
+            if(i === index) continue;
+            const item = list[i];
+            const itemTop = item.top;
+            const itemBottom = itemTop + item.height;
+            if(Math.abs(bottom - itemTop) <= CAPTURE_TOLERANCE) {
+                res.height = itemTop - top;
+                res.capturedY = true;
+                res.capturedTop = false;
+                break;
+            }
+            if(Math.abs(bottom - itemBottom) <= CAPTURE_TOLERANCE) {
+                res.height = itemBottom - top;
+                res.capturedY = true;
+                res.capturedTop = false;
+                break;
+            }
+        }
+    }
+    return res;
+}
