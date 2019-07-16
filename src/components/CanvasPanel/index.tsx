@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Slider } from 'antd';
 import ContextMenu from '../ContextMenu';
 import Draggable from '../Draggable';
 import { reducer, initialState, CanvasPanelProps } from './store';
@@ -69,16 +70,13 @@ const CanvasPanel = ({draggableList}:CanvasPanelProps) => {
     const handleMouseDown = (e:React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log(e)
         const id = (e.target as HTMLDivElement).id;
         const cursor = (e.target as HTMLDivElement).style.cursor;
         if(e.button === 2) {
             if(id) {
-                dispatch({ type: 'handleToggleMenu', showMenu: true, left: e.screenX - (e.currentTarget as HTMLDivElement & MouseEvent).screenX, top: e.screenY - (e.currentTarget as HTMLDivElement & MouseEvent).screenY });
+                dispatch({ type: 'handleToggleMenu', showMenu: true, left: e.pageX - (e.currentTarget as HTMLDivElement).offsetLeft, top: e.pageY - ((e.currentTarget as HTMLDivElement).offsetParent as HTMLDivElement).offsetTop });
             }
         } else {
-            dispatch({ type: 'handleToggleMenu', showMenu: false });
-            
             if(id) {
                 handleSelect(+id);
                 dispatch({ type: 'handleMoveStart' });
@@ -107,10 +105,17 @@ const CanvasPanel = ({draggableList}:CanvasPanelProps) => {
         e.stopPropagation();
         dispatch({ type: 'handleMoveEnd' });
         dispatch({ type: 'handleResizeEnd' });
+        if(e.button !== 2 && e.type !== 'mouseleave') {
+            dispatch({ type: 'handleToggleMenu', showMenu: false });
+        }
     }
     const handleToggleCapture = (e:React.MouseEvent) => {
         e.preventDefault();
         dispatch({ type: 'handleToggleCapture' });
+    }
+    // 处理scale改变事件
+    const handleSlide = (value:number) => {
+        dispatch({ type: 'handleScaleChange', scale: value });
     }
 
     // 右键菜单
@@ -118,32 +123,65 @@ const CanvasPanel = ({draggableList}:CanvasPanelProps) => {
         {
             title: '置于顶层',
             onClick: () => {
-                console.log(1)
+                console.log(1);
+                dispatch({ type: 'handleToggleMenu', showMenu: false });
+            }
+        },
+        {
+            title: '上移一层',
+            onClick: () => {
+                console.log(2);
+                dispatch({ type: 'handleToggleMenu', showMenu: false });
+            }
+        },
+        {
+            title: '下移一层',
+            onClick: () => {
+                console.log(3);
+                dispatch({ type: 'handleToggleMenu', showMenu: false });
+            }
+        },
+        {
+            title: '置于底层',
+            onClick: () => {
+                console.log(4);
+                dispatch({ type: 'handleToggleMenu', showMenu: false });
             }
         }
     ];
 
     return (
-        <div
-            className="canvas-panel"
-            style={{ width: state.containerWidth, height: state.containerHeight }}
-            onMouseDown={ handleMouseDown }
-            onMouseMove={ handleMouseMove }
-            onMouseUp={ handleMouseUp }
-            onMouseLeave={ handleMouseUp }
-            onContextMenu={ (e) => {e.preventDefault()} }>
-            {
-                state.draggableList.map((item) => (
-                    <Draggable
-                        key={ item.id }
-                        { ...item }
-                        selected={ state.selected }
-                    ></Draggable>
-                ))
-            }
-            <button style={{ position: 'absolute', bottom: 50, left: 50 }} onClick={ handleToggleCapture }>{ state.capturable ? '关闭捕捉' : '开启捕捉' }</button>
-            <ContextMenu menuList={ menuList } show={ state.showMenu } left={ state.menuPosition.left } top={ state.menuPosition.top }></ContextMenu>
+        <div>
+            <div
+                className="canvas-panel"
+                style={{ width: state.containerWidth, height: state.containerHeight, transform: `scale(${state.scale})` }}
+                onMouseDown={ handleMouseDown }
+                onMouseMove={ handleMouseMove }
+                onMouseUp={ handleMouseUp }
+                onMouseLeave={ handleMouseUp }
+                onContextMenu={ (e) => {e.preventDefault()} }>
+                {
+                    state.draggableList.map((item) => (
+                        <Draggable
+                            key={ item.id }
+                            { ...item }
+                            selected={ state.selected }
+                        ></Draggable>
+                    ))
+                }
+                <ContextMenu menuList={ menuList } show={ state.showMenu } left={ state.menuPosition.left } top={ state.menuPosition.top }></ContextMenu>
+            </div>
+            <button style={{ position: 'absolute', top: 20, left: 30 }} onClick={ handleToggleCapture }>{ state.capturable ? '关闭捕捉' : '开启捕捉' }</button>
+            <Slider
+                style={{ position: 'absolute', top: 60, left: 30, width: 100 }}
+                min={0.1}
+                max={1}
+                onChange={ handleSlide }
+                value={ state.scale }
+                step={0.01}
+            />
         </div>
+        
     );
 }
 

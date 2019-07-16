@@ -18,7 +18,9 @@ export default class Container extends React.Component<any, any> {
         return (
             <div className="container">
                 <ChartPanel></ChartPanel>
-                <CanvasPanel draggableList={[]}></CanvasPanel>
+                <div className="canvas-container">
+                    <CanvasPanel draggableList={[]}></CanvasPanel>
+                </div>
             </div>
         )
     }

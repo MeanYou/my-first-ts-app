@@ -4,7 +4,7 @@ import './style.less';
 
 // const { useReducer } = React;
 
-const Draggable = ({ id, width, height, left, top, right, bottom, selected }:DraggableProps) => {
+const Draggable = ({ id, width, height, left, top, right, bottom, selected, render }:DraggableProps) => {
     // const [state, dispatch] = useReducer(reducer, { width, height, top, left, dragging: false });
 
     // // 鼠标按下
@@ -38,7 +38,6 @@ const Draggable = ({ id, width, height, left, top, right, bottom, selected }:Dra
 
     return (
         <div
-            id={ id.toString() }
             className="draggable"
             style={{ width, height, left: left < 0 ? 'auto' : left, top: top < 0 ? 'auto' : top, right, bottom, zIndex: id }}
             // onMouseDown={ handleMouseDown }
@@ -46,9 +45,10 @@ const Draggable = ({ id, width, height, left, top, right, bottom, selected }:Dra
             // onMouseUp={ handleMouseUp }
             // onMouseLeave={ handleMouseUp }
             >
+            <div className="draggable__shade" id={ id.toString() }></div>
             {
                 id === selected ? (
-                    <div>
+                    <div className="draggable__selected">
                         <ResizePoint top={'0%'} left={'0%'} cursor="nw-resize"></ResizePoint>
                         <ResizePoint top={'0%'} left={'50%'} cursor="ns-resize"></ResizePoint>
                         <ResizePoint top={'0%'} left={'100%'} cursor="ne-resize"></ResizePoint>
@@ -60,6 +60,9 @@ const Draggable = ({ id, width, height, left, top, right, bottom, selected }:Dra
                     </div>
                 ) : null
             }
+            {
+                render ? render({width, height}) : null
+            }
         </div>
     );
 }
@@ -68,7 +71,7 @@ const ResizePoint = (props:ResizePointProps) => {
     
     return (
         <div
-            className="draggable__resize"
+            className="draggable__selected__resizer"
             style={{ top: props.top, left: props.left, cursor: props.cursor }}></div>
     );
 }

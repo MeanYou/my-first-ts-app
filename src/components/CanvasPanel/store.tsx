@@ -1,3 +1,5 @@
+import * as React from 'react';
+import BarChart from '../ChartItem/BarChart';
 import { DraggableProps } from '../Draggable/store';
 /**
  * 配置常量
@@ -31,48 +33,70 @@ export interface State {
     capturedY: boolean,
     capturedTop: boolean,
     showMenu: boolean,
-    menuPosition: {left: number, top: number}
+    menuPosition: {left: number, top: number},
+    scale: number
 }
 
 /**
  * 初始状态
  */
+
 const list:Array<DraggableProps> = [{
     id: 1,
     selected: 0,
     top: 50,
-    left: 50,
+    left: 450,
     right: 0,
     bottom: 0,
     width: 100,
-    height: 100
+    height: 100,
+    render: data => {
+        return (
+            <BarChart { ...data } name="销量" category={ ['T恤', '衬衫', '短裤', '牛仔裤'] } data={ [] }/>
+        );
+    }
 },{
     id: 2,
     selected: 0,
     top: 50,
-    left: 150,
+    left: 550,
     right: 0,
     bottom: 0,
     width: 100,
-    height: 100
+    height: 100,
+    render: data => {
+        return (
+            <div>123</div>
+        );
+    }
 },{
     id: 3,
     selected: 0,
     top: 50,
-    left: 250,
+    left: 650,
     right: 0,
     bottom: 0,
     width: 100,
-    height: 100
+    height: 100,
+    render: data => {
+        return (
+            <div>123</div>
+        );
+    }
 },{
     id: 4,
     selected: 0,
     top: 50,
-    left: 350,
+    left: 750,
     right: 0,
     bottom: 0,
     width: 100,
-    height: 100
+    height: 100,
+    render: data => {
+        return (
+            <BarChart { ...data } name="销量" category={ ['T恤', '衬衫', '短裤', '牛仔裤'] } data={ [] }/>
+        );
+    }
 }];
 export const initialState = {
     draggableList: list,
@@ -81,8 +105,8 @@ export const initialState = {
     resizing: false,
     resizerLeft: '0%',
     resizerTop: '0%',
-    containerWidth: 1600,
-    containerHeight: 600,
+    containerWidth: 13440,
+    containerHeight: 5400,
     capturable: true,
     capturedX: false,
     capturedLeft: true,
@@ -92,7 +116,8 @@ export const initialState = {
     menuPosition: {
         left: 0,
         top: 0
-    }
+    },
+    scale: 1
 };
 
 /**
@@ -126,6 +151,9 @@ export type Action = {
     showMenu: boolean,
     left?: number,
     top?: number
+} | {
+    type: 'handleScaleChange',
+    scale: number 
 }
 
 const handleSelect = (state: State, action: Action): State => {
@@ -355,6 +383,15 @@ const handleToggleMenu = (state:State, action:Action): State => {
     }
     return state;
 }
+const handleScaleChange = (state:State, action:Action): State => {
+    if(action.type === 'handleScaleChange') {
+        return {
+            ...state,
+            scale: action.scale
+        }
+    }
+    return state;
+}
 
 export const reducer = (state: State, action: Action) => {
     switch (action.type) {
@@ -376,6 +413,8 @@ export const reducer = (state: State, action: Action) => {
             return handleToggleCapture(state, action);
         case 'handleToggleMenu':
             return handleToggleMenu(state, action);
+        case 'handleScaleChange':
+            return handleScaleChange(state, action);
         default:
             return state;
     }

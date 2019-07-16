@@ -1,3 +1,4 @@
+import { ReactElement } from 'react';
 /**
  * 定义Draggable组件的prop参数
  */
@@ -9,7 +10,8 @@ export interface DraggableProps {
     left: number,
     right: number,
     top: number,
-    bottom: number
+    bottom: number,
+    render?: (param:{width:number, height:number}) => ReactElement
 };
 
 /**
